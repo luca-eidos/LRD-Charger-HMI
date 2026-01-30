@@ -1,0 +1,8 @@
+{
+  "name": "LRD charger HMI",
+  "description": "A professional 10-inch portrait HMI for high-power EV charging stations featuring a minimalist industrial design and AI-powered background customization.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
