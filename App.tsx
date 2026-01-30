@@ -6,25 +6,27 @@ import ChargingScreen from './components/ChargingScreen';
 import ImageGenOverlay from './components/ImageGenOverlay';
 
 const App: React.FC = () => {
+  const [isLightTheme, setIsLightTheme] = useState(false);
   const [customBg, setCustomBg] = useState<string | null>(null);
   const [showImageGen, setShowImageGen] = useState(false);
   const [currentDate, setCurrentDate] = useState('');
   const [currentTime, setCurrentTime] = useState('');
+  
+  // Connectivity States
+  const [isOnline, setIsOnline] = useState(true);
+  const [connType, setConnType] = useState<'LTE' | 'ETHERNET'>('LTE');
 
   useEffect(() => {
     const updateDateTime = () => {
       const now = new Date();
-      // Format: dd/mm/yyyy
       const d = String(now.getDate()).padStart(2, '0');
       const m = String(now.getMonth() + 1).padStart(2, '0');
       const y = now.getFullYear();
       setCurrentDate(`${d}/${m}/${y}`);
 
-      // Format: HH:mm:ss
       const hh = String(now.getHours()).padStart(2, '0');
       const mm = String(now.getMinutes()).padStart(2, '0');
-      const ss = String(now.getSeconds()).padStart(2, '0');
-      setCurrentTime(`${hh}:${mm}:${ss}`);
+      setCurrentTime(`${hh}:${mm}`);
     };
 
     updateDateTime();
@@ -32,19 +34,16 @@ const App: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Connector 1 State
   const [state1, setState1] = useState<HMIState>('IDLE');
   const [data1, setData1] = useState<ChargingData>({
     energyDelivered: 0, currentPower: 22.0, soc: 18, cost: 0, elapsedTime: 0
   });
 
-  // Connector 2 State
   const [state2, setState2] = useState<HMIState>('IDLE');
   const [data2, setData2] = useState<ChargingData>({
     energyDelivered: 0, currentPower: 11.0, soc: 42, cost: 0, elapsedTime: 0
   });
 
-  // Independent simulation for both connectors
   useEffect(() => {
     const interval = setInterval(() => {
       if (state1 === 'CHARGING') {
@@ -69,12 +68,11 @@ const App: React.FC = () => {
     return () => clearInterval(interval);
   }, [state1, state2]);
 
-  const handleStartProcess = (socketId: 1 | 2) => {
+  const handleStartProcess = (socketId: 1 | 2, forceSuccess: boolean) => {
     const setSideState = socketId === 1 ? setState1 : setState2;
     setSideState('AUTHORIZING');
     setTimeout(() => {
-      const isSuccess = Math.random() > 0.05;
-      if (isSuccess) {
+      if (forceSuccess) {
         setSideState('AUTHORIZED_SUCCESS');
         setTimeout(() => setSideState('CHARGING'), 2500);
       } else {
@@ -98,31 +96,53 @@ const App: React.FC = () => {
     setSideData(defaultData);
   };
 
+  const triggerError = (socketId: 1 | 2) => {
+    const setSideState = socketId === 1 ? setState1 : setState2;
+    setSideState('ERROR');
+  };
+
   const getButtonLabel = (state: HMIState) => {
     switch(state) {
       case 'IDLE': return 'START';
       case 'AUTHORIZING': return 'WAIT';
-      case 'AUTHORIZED_SUCCESS': return 'PLUG IN';
+      case 'AUTHORIZED_SUCCESS': return 'PLUG';
       case 'AUTHORIZATION_DENIED': return 'RETRY';
       case 'CHARGING': return 'STOP';
-      case 'SUMMARY': return 'FINISH';
+      case 'SUMMARY': return 'DONE';
+      case 'ERROR': return 'RESET';
       default: return 'START';
     }
   };
 
-  const formatSummaryTime = (seconds: number) => {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `${hrs}h ${mins}m ${secs}s`;
-  };
+  const themeClasses = isLightTheme 
+    ? {
+        appBg: 'bg-[#f1f5f9]',
+        frameBg: 'bg-white',
+        frameBorder: 'border-slate-200',
+        headerBg: 'bg-white/90 border-slate-200',
+        divider: 'border-slate-200',
+        textPrimary: 'text-slate-900',
+        textSecondary: 'text-slate-500',
+        buttonActionBg: 'bg-[#00e5ff]/5 border-[#00e5ff]',
+        buttonMutedBg: 'bg-slate-100 border-slate-200'
+      }
+    : {
+        appBg: 'bg-[#050505]',
+        frameBg: 'bg-[#0d0f11]',
+        frameBorder: 'border-[#1e2022]',
+        headerBg: 'bg-[#0d0f11]/95 border-white/10',
+        divider: 'border-white/10',
+        textPrimary: 'text-white',
+        textSecondary: 'text-white/70',
+        buttonActionBg: 'bg-[#00e5ff]/10 border-[#00e5ff]',
+        buttonMutedBg: 'bg-white/5 border-white/20'
+      };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-[#050505] p-6">
+    <div className={`flex items-center justify-center min-h-screen p-6 transition-colors duration-500 ${themeClasses.appBg}`}>
       <div className="flex flex-col items-center gap-10 w-full max-w-[1300px]">
         
-        {/* The 16:9 Screen Container - Expanded Frame */}
-        <div className="relative w-full aspect-video bg-[#0d0f11] overflow-hidden rounded-[60px] border-[24px] border-[#1e2022] shadow-[0_0_150px_rgba(0,0,0,1)] flex flex-col">
+        <div className={`relative w-full aspect-video overflow-hidden rounded-[60px] border-[24px] shadow-[0_0_150px_rgba(0,0,0,0.4)] flex flex-col transition-all duration-500 ${themeClasses.frameBg} ${themeClasses.frameBorder}`}>
           {customBg && (
             <div 
               className="absolute inset-0 opacity-20 pointer-events-none transition-opacity duration-1000"
@@ -130,95 +150,162 @@ const App: React.FC = () => {
             />
           )}
 
-          {/* HMI Header */}
-          <div className="z-20 px-16 py-8 flex justify-between items-center bg-[#0d0f11]/95 backdrop-blur-xl border-b border-white/10 text-white/70 text-xs font-black uppercase tracking-[0.4em]">
-            <div className="flex items-center gap-8">
-              <span className="text-[#00e5ff] text-2xl tracking-tighter italic font-bold">PowerNode DUO</span>
-              <div className="w-2 h-2 bg-white/20 rounded-full"></div>
-              <span className="opacity-90 font-black text-[15px]">{currentDate}</span>
+          {/* Header */}
+          <div className={`z-20 px-16 py-8 flex justify-between items-center backdrop-blur-xl border-b text-xs font-black uppercase tracking-[0.4em] transition-all duration-500 ${themeClasses.headerBg} ${isLightTheme ? 'text-slate-500' : 'text-white/70'}`}>
+            <div className="flex items-center gap-6">
+              <div className="flex flex-col">
+                <span className="text-[#00e5ff] text-2xl tracking-tighter italic font-bold leading-tight">PowerNode DUO</span>
+                <div 
+                  className="flex items-center gap-2 mt-1 cursor-pointer active:scale-95 transition-transform"
+                  onClick={() => setIsOnline(!isOnline)}
+                >
+                  <div className={`w-2.5 h-2.5 rounded-full shadow-[0_0_8px_currentColor] ${isOnline ? 'bg-green-500 text-green-500' : 'bg-red-500 text-red-500'}`}></div>
+                  <span className={`text-[9px] font-black tracking-widest ${isOnline ? 'text-green-500' : 'text-red-500'}`}>
+                    {isOnline ? 'ONLINE' : 'OFFLINE'}
+                  </span>
+                </div>
+              </div>
             </div>
-            <div className="flex items-center gap-10">
-              <div className="flex items-baseline gap-3">
-                <span className="text-white font-black text-3xl tracking-tighter tabular-nums">{currentTime}</span>
+            
+            <div className="flex items-center gap-8">
+              {/* Theme Toggle */}
+              <button 
+                onClick={() => setIsLightTheme(!isLightTheme)}
+                className={`flex items-center justify-center p-2 rounded-lg border transition-all active:scale-90 ${isLightTheme ? 'bg-slate-100 border-slate-200 text-slate-600' : 'bg-white/5 border-white/10 text-white/60'}`}
+                title="Toggle Theme"
+              >
+                {isLightTheme ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364-.707.707M6.343 17.657l-.707.707m12.728 0-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/></svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                )}
+              </button>
+
+              <div 
+                className={`flex items-center gap-2 px-4 py-1.5 rounded-lg border cursor-pointer hover:bg-opacity-20 active:scale-95 transition-all ${isLightTheme ? 'bg-slate-100 border-slate-200' : 'bg-white/5 border-white/10'}`}
+                onClick={() => setConnType(connType === 'LTE' ? 'ETHERNET' : 'LTE')}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="text-[#00e5ff]">
+                  {connType === 'LTE' ? (
+                    <><path d="M5 12.55a11 11 0 0 1 14.08 0" /><path d="M1.42 9a16 16 0 0 1 21.16 0" /><path d="M8.53 16.11a6 6 0 0 1 6.95 0" /><line x1="12" y1="20" x2="12.01" y2="20" /></>
+                  ) : (
+                    <><rect x="2" y="14" width="20" height="8" rx="2" /><path d="M6 14V2" /><path d="M10 14V2" /><path d="M14 14V2" /><path d="M18 14V2" /></>
+                  )}
+                </svg>
+                <span className={`text-[10px] font-black tracking-[0.2em] ${isLightTheme ? 'text-slate-400' : 'text-white/40'}`}>{connType}</span>
+              </div>
+
+              <div className="flex items-center gap-6">
+                <span className={`opacity-90 font-black text-[15px] transition-colors ${themeClasses.textPrimary}`}>{currentDate}</span>
+                <div className={`w-1.5 h-1.5 rounded-full ${isLightTheme ? 'bg-slate-300' : 'bg-white/20'}`}></div>
+                <div className="flex items-baseline gap-3">
+                  <span className={`font-black text-3xl tracking-tighter tabular-nums transition-colors ${themeClasses.textPrimary}`}>{currentTime}</span>
+                </div>
               </div>
             </div>
           </div>
 
           <div className="flex-1 flex z-10 relative">
-            <div className="flex-1 flex flex-col border-r border-white/10 relative overflow-hidden">
-              <SocketLabel label="1" status={state1} />
+            <div className={`flex-1 flex flex-col border-r relative overflow-hidden ${themeClasses.divider}`}>
+              <SocketLabel label="1" status={state1} theme={isLightTheme} />
               <SocketContent 
                 state={state1} 
                 data={data1} 
-                onFinish={() => handleFinish(1)}
+                isLightTheme={isLightTheme}
               />
             </div>
             <div className="flex-1 flex flex-col relative overflow-hidden">
-              <SocketLabel label="2" status={state2} />
+              <SocketLabel label="2" status={state2} theme={isLightTheme} />
               <SocketContent 
                 state={state2} 
                 data={data2} 
-                onFinish={() => handleFinish(2)}
+                isLightTheme={isLightTheme}
               />
             </div>
           </div>
 
-          {showImageGen && <ImageGenOverlay onClose={() => setShowImageGen(false)} onImageGenerated={(url) => { setCustomBg(url); setShowImageGen(false); }} />}
+          {showImageGen && <ImageGenOverlay onClose={() => setShowImageGen(false)} onImageGenerated={(url) => { setCustomBg(url); setShowImageGen(false); }} isLightTheme={isLightTheme} />}
         </div>
 
-        {/* Physical Controls & Global Settings */}
+        {/* Socket Controls - Commands Area */}
         <div className="w-full flex flex-col gap-10">
           <div className="flex justify-between w-full px-16 gap-20">
-            {/* Controls for Socket 1 */}
-            <div className="flex-1 flex flex-col items-center">
-              <div className="text-white/30 text-[12px] font-black uppercase tracking-[0.5em] mb-5">Socket 1 Command</div>
-              <button 
-                onClick={() => {
-                  if (state1 === 'IDLE' || state1 === 'AUTHORIZATION_DENIED') handleStartProcess(1);
-                  else if (state1 === 'CHARGING') handleStop(1);
-                  else if (state1 === 'SUMMARY') handleFinish(1);
-                }}
-                disabled={state1 === 'AUTHORIZING' || state1 === 'AUTHORIZED_SUCCESS'}
-                className={`w-full py-12 rounded-[50px] border-[6px] flex items-center justify-center gap-8 transition-all active:scale-95 disabled:opacity-40
-                  ${state1 === 'CHARGING' 
-                    ? 'bg-red-600/10 border-red-500 shadow-[0_20px_70px_rgba(239,68,68,0.5)]' 
-                    : 'bg-[#00e5ff]/10 border-[#00e5ff] shadow-[0_20px_70px_rgba(0,229,255,0.5)]'}`}
-              >
-                <div className={`w-5 h-5 rounded-full ${state1 === 'CHARGING' ? 'bg-red-500 animate-pulse' : 'bg-[#00e5ff]'}`}></div>
-                <span className={`text-5xl font-black uppercase tracking-[0.2em] ${state1 === 'CHARGING' ? 'text-red-400' : 'text-[#00e5ff]'}`}>
-                  {getButtonLabel(state1)}
-                </span>
-              </button>
-            </div>
+            {[1, 2].map((id) => {
+              const s = id === 1 ? state1 : state2;
+              const isIdleOrDenied = s === 'IDLE' || s === 'AUTHORIZATION_DENIED';
+              const isError = s === 'ERROR';
 
-            {/* Controls for Socket 2 */}
-            <div className="flex-1 flex flex-col items-center">
-              <div className="text-white/30 text-[12px] font-black uppercase tracking-[0.5em] mb-5">Socket 2 Command</div>
-              <button 
-                onClick={() => {
-                  if (state2 === 'IDLE' || state2 === 'AUTHORIZATION_DENIED') handleStartProcess(2);
-                  else if (state2 === 'CHARGING') handleStop(2);
-                  else if (state2 === 'SUMMARY') handleFinish(2);
-                }}
-                disabled={state2 === 'AUTHORIZING' || state2 === 'AUTHORIZED_SUCCESS'}
-                className={`w-full py-12 rounded-[50px] border-[6px] flex items-center justify-center gap-8 transition-all active:scale-95 disabled:opacity-40
-                  ${state2 === 'CHARGING' 
-                    ? 'bg-red-600/10 border-red-500 shadow-[0_20px_70px_rgba(239,68,68,0.5)]' 
-                    : 'bg-[#00e5ff]/10 border-[#00e5ff] shadow-[0_20px_70px_rgba(0,229,255,0.5)]'}`}
-              >
-                <div className={`w-5 h-5 rounded-full ${state2 === 'CHARGING' ? 'bg-red-500 animate-pulse' : 'bg-[#00e5ff]'}`}></div>
-                <span className={`text-5xl font-black uppercase tracking-[0.2em] ${state2 === 'CHARGING' ? 'text-red-400' : 'text-[#00e5ff]'}`}>
-                  {getButtonLabel(state2)}
-                </span>
-              </button>
-            </div>
+              return (
+                <div key={id} className="flex-1 flex flex-col items-center">
+                  <div className={`text-[12px] font-black uppercase tracking-[0.2em] mb-4 text-center transition-colors ${isLightTheme ? 'text-slate-400' : 'text-white/30'}`}>Socket {id} Controls</div>
+                  
+                  <div className="grid grid-cols-2 gap-4 w-full">
+                    <div className="flex flex-col gap-4">
+                      {isIdleOrDenied || isError ? (
+                        <div className="flex flex-col gap-2 h-full">
+                          <button 
+                            onClick={() => {
+                              if (isError) handleFinish(id as 1|2);
+                              else handleStartProcess(id as 1|2, true);
+                            }}
+                            className={`flex-1 rounded-[32px] border-[4px] flex flex-col items-center justify-center gap-1 transition-all active:scale-95
+                              ${themeClasses.buttonActionBg} shadow-[0_8px_25px_rgba(0,229,255,0.2)]`}
+                          >
+                            <span className="text-xl font-black uppercase tracking-[0.1em] text-[#00e5ff]">
+                              {isError ? 'RESET' : 'AUTH OK'}
+                            </span>
+                          </button>
+                          {!isError && (
+                            <button 
+                              onClick={() => handleStartProcess(id as 1|2, false)}
+                              className={`flex-1 rounded-[32px] border-[4px] flex flex-col items-center justify-center gap-1 transition-all active:scale-95
+                                bg-red-600/5 border-red-500/30`}
+                            >
+                              <span className="text-xl font-black uppercase tracking-[0.1em] text-red-500">
+                                AUTH FAIL
+                              </span>
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <button 
+                          onClick={() => {
+                            if (s === 'CHARGING') handleStop(id as 1|2);
+                            else if (s === 'SUMMARY') handleFinish(id as 1|2);
+                          }}
+                          disabled={s === 'AUTHORIZING' || s === 'AUTHORIZED_SUCCESS'}
+                          className={`w-full h-full py-8 rounded-[32px] border-[4px] flex flex-col items-center justify-center gap-3 transition-all active:scale-95 disabled:opacity-40
+                            ${s === 'CHARGING' 
+                              ? 'bg-red-600/10 border-red-500 shadow-[0_8px_25px_rgba(239,68,68,0.2)]' 
+                              : themeClasses.buttonActionBg + ' shadow-[0_8px_25px_rgba(0,229,255,0.2)]'}`}
+                        >
+                          <div className={`w-3.5 h-3.5 rounded-full ${s === 'CHARGING' ? 'bg-red-500 animate-pulse' : 'bg-[#00e5ff]'}`}></div>
+                          <span className={`text-2xl font-black uppercase tracking-[0.2em] ${s === 'CHARGING' ? 'text-red-400' : 'text-[#00e5ff]'}`}>
+                            {getButtonLabel(s)}
+                          </span>
+                        </button>
+                      )}
+                    </div>
+
+                    <button 
+                      onClick={() => triggerError(id as 1 | 2)}
+                      className={`py-8 rounded-[32px] border-[4px] flex flex-col items-center justify-center gap-3 transition-all active:scale-95 ${isLightTheme ? 'bg-red-50 border-red-200 hover:bg-red-100 hover:border-red-400' : 'border-red-600/30 bg-red-600/5 hover:bg-red-600/10 hover:border-red-600/60'}`}
+                    >
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="3" className="mb-0.5">
+                        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                      </svg>
+                      <span className="text-red-500 text-2xl font-black uppercase tracking-[0.2em]">FAULT</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
-          {/* Theme Settings Button - Outside Frame */}
           <div className="flex justify-center">
             <button 
               onClick={() => setShowImageGen(true)} 
-              className="px-14 py-5 bg-white/5 hover:bg-white/10 border-[3px] border-white/20 rounded-full text-white/60 hover:text-[#00e5ff] transition-all font-black text-base uppercase tracking-[0.4em] active:scale-95"
+              className={`px-14 py-5 border-[3px] rounded-full transition-all font-black text-base uppercase tracking-[0.4em] active:scale-95 ${isLightTheme ? 'bg-slate-100 border-slate-200 text-slate-500 hover:text-[#00e5ff] hover:bg-white' : 'bg-white/5 border-white/20 text-white/60 hover:text-[#00e5ff] hover:bg-white/10'}`}
             >
               HMI Theme Customization
             </button>
@@ -229,17 +316,17 @@ const App: React.FC = () => {
   );
 };
 
-const SocketLabel: React.FC<{ label: string, status: string }> = ({ label, status }) => (
+const SocketLabel: React.FC<{ label: string, status: string, theme: boolean }> = ({ label, status, theme }) => (
   <div className="absolute top-10 left-12 flex items-center gap-6 z-30 pointer-events-none">
-    <div className="bg-[#00e5ff] text-black px-8 py-3 rounded-2xl font-black text-4xl shadow-[0_8px_25px_rgba(0,229,255,0.6)]">
+    <div className="bg-[#00e5ff] text-black px-8 py-3 rounded-2xl font-black text-4xl shadow-[0_4px_12px_rgba(0,229,255,0.3)]">
       {label}
     </div>
-    <div className={`text-base font-black uppercase tracking-[0.4em] px-5 py-2.5 rounded-2xl border-[3px] ${
+    <div className={`text-base font-black uppercase tracking-[0.4em] px-5 py-2.5 rounded-2xl border-[3px] transition-all duration-500 ${
       status === 'IDLE' 
-        ? 'bg-green-500/10 border-green-500/30 text-green-400' 
-        : status === 'AUTHORIZATION_DENIED'
-        ? 'bg-red-500/10 border-red-500/30 text-red-400'
-        : 'bg-orange-500/10 border-orange-500/30 text-orange-400'
+        ? 'bg-green-500/10 border-green-500/30 text-green-500' 
+        : status === 'ERROR' || status === 'AUTHORIZATION_DENIED'
+        ? 'bg-red-500/10 border-red-500/30 text-red-500'
+        : 'bg-orange-500/10 border-orange-500/30 text-orange-500'
     }`}>
       {status.replace('_', ' ')}
     </div>
@@ -249,8 +336,8 @@ const SocketLabel: React.FC<{ label: string, status: string }> = ({ label, statu
 const SocketContent: React.FC<{ 
   state: HMIState, 
   data: ChargingData, 
-  onFinish: () => void
-}> = ({ state, data, onFinish }) => {
+  isLightTheme: boolean
+}> = ({ state, data, isLightTheme }) => {
   const formatSummaryTime = (seconds: number) => {
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
@@ -258,24 +345,27 @@ const SocketContent: React.FC<{
     return `${hrs}h ${mins}m ${secs}s`;
   };
 
+  const textPrimary = isLightTheme ? 'text-slate-900' : 'text-white';
+  const textSecondary = isLightTheme ? 'text-slate-500' : 'text-white/70';
+
   switch (state) {
     case 'IDLE':
-      return <IdleScreen onStart={() => {}} />;
+      return <IdleScreen isLightTheme={isLightTheme} onStart={() => {}} />;
     case 'AUTHORIZING':
       return (
         <div className="flex-1 flex flex-col items-center justify-center p-14 animate-in fade-in duration-500">
-          <div className="w-40 h-40 rounded-full border-[12px] border-[#00e5ff]/20 border-t-[#00e5ff] animate-spin mb-14 shadow-[0_0_80px_rgba(0,229,255,0.5)]"></div>
-          <h2 className="text-white text-5xl font-black uppercase tracking-[0.3em] mb-6">Authorizing...</h2>
-          <p className="text-white/70 text-2xl font-black uppercase tracking-widest text-center leading-relaxed">Processing<br/>Encrypted Payment</p>
+          <div className="w-40 h-40 rounded-full border-[12px] border-[#00e5ff]/20 border-t-[#00e5ff] animate-spin mb-14 shadow-[0_0_40px_rgba(0,229,255,0.25)]"></div>
+          <h2 className={`text-5xl font-black uppercase tracking-[0.3em] mb-6 transition-colors ${textPrimary}`}>Validating...</h2>
+          <p className={`text-2xl font-black uppercase tracking-widest text-center leading-relaxed transition-colors ${textSecondary}`}>Checking<br/>RFID Credentials</p>
         </div>
       );
     case 'AUTHORIZED_SUCCESS':
       return (
         <div className="flex-1 flex flex-col items-center justify-center p-14 text-center animate-in zoom-in duration-500">
           <div className="w-36 h-36 rounded-full bg-green-500/20 flex items-center justify-center mb-10 border-[5px] border-green-500/40">
-            <svg className="text-green-400" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <svg className="text-green-500" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
           </div>
-          <h2 className="text-white text-4xl font-black uppercase tracking-tighter mb-6 italic leading-tight">Access<br/>Granted</h2>
+          <h2 className={`text-4xl font-black uppercase tracking-tighter mb-6 italic leading-tight transition-colors ${textPrimary}`}>Access<br/>Granted</h2>
           <p className="text-[#00e5ff] text-2xl font-black uppercase tracking-widest leading-relaxed">
             Please connect cable<br/>to your vehicle
           </p>
@@ -285,50 +375,64 @@ const SocketContent: React.FC<{
       return (
         <div className="flex-1 flex flex-col items-center justify-center p-14 text-center animate-in slide-in-from-bottom-10 duration-500">
           <div className="w-44 h-44 rounded-full bg-red-500/20 flex items-center justify-center mb-14 border-[6px] border-red-500/40">
-            <svg className="text-red-400" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            <svg className="text-red-500" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </div>
-          <h2 className="text-red-400 text-6xl font-black uppercase tracking-tighter mb-8 italic">Denied</h2>
-          <p className="text-white text-2xl font-black uppercase tracking-widest mb-12">Validation Error.</p>
-          <p className="text-white/40 text-[12px] font-black uppercase tracking-[0.5em] bg-white/5 px-8 py-3 rounded-full">Use command button to retry</p>
+          <h2 className="text-red-500 text-6xl font-black uppercase tracking-tighter mb-8 italic">Denied</h2>
+          <p className={`text-2xl font-black uppercase tracking-widest mb-12 transition-colors ${textPrimary}`}>Invalid Card.</p>
+          <p className={`text-[12px] font-black uppercase tracking-[0.5em] px-8 py-3 rounded-full italic ${isLightTheme ? 'bg-slate-100 text-slate-400' : 'bg-white/5 text-white/40'}`}>Unauthorized Tag</p>
         </div>
       );
     case 'CHARGING':
-      return <ChargingScreen data={data} isConnecting={false} onStop={() => {}} />;
+      return <ChargingScreen data={data} isConnecting={false} onStop={() => {}} isLightTheme={isLightTheme} />;
     case 'SUMMARY':
       return (
         <div className="flex-1 flex flex-col p-16 pt-40 animate-in fade-in duration-700">
-          <div className="mb-14 flex justify-between items-end">
-            <h2 className="text-white text-7xl font-black uppercase italic tracking-tighter">Summary</h2>
-            <span className="text-white/40 text-[14px] font-black uppercase tracking-widest mb-1 opacity-60">SESS #992-VP</span>
+          <div className="mb-6 flex justify-between items-end">
+            <h2 className={`text-5xl font-black uppercase italic tracking-tighter transition-colors ${textPrimary}`}>Summary</h2>
+            <span className={`text-[12px] font-black uppercase tracking-widest mb-1 opacity-60 transition-colors ${textSecondary}`}>SESS #992-VP</span>
           </div>
-          
-          <div className="bg-white/5 border-[4px] border-white/20 rounded-[50px] p-12 mb-14 shadow-2xl">
-            <div className="space-y-10">
-              <div className="flex justify-between items-baseline border-b-2 border-white/10 pb-8">
-                <span className="text-white/80 text-3xl font-black uppercase tracking-widest">Total Cost</span>
-                <span className="text-[#00e5ff] text-8xl font-black tracking-tighter">€{data.cost.toFixed(2)}</span>
+          <div className={`border-[3px] rounded-[40px] p-8 mb-6 shadow-xl transition-all duration-500 ${isLightTheme ? 'bg-slate-50 border-slate-200' : 'bg-white/5 border-white/20'}`}>
+            <div className="space-y-6">
+              <div className={`flex justify-between items-baseline border-b-2 pb-4 ${isLightTheme ? 'border-slate-200' : 'border-white/10'}`}>
+                <span className={`text-xl font-black uppercase tracking-widest transition-colors ${textSecondary}`}>Total Energy</span>
+                <span className="text-[#00e5ff] text-6xl font-black tracking-tighter">{data.energyDelivered.toFixed(2)}<span className="text-xl ml-2">kWh</span></span>
               </div>
-              <div className="flex justify-between items-center text-white">
-                <div className="flex flex-col gap-3">
-                  <span className="text-[14px] text-white/50 font-black uppercase tracking-[0.4em]">Session Time</span>
-                  <span className="text-4xl font-black tracking-tight">{formatSummaryTime(data.elapsedTime)}</span>
-                </div>
-                <div className="flex flex-col gap-3 text-right">
-                  <span className="text-[14px] text-white/50 font-black uppercase tracking-[0.4em]">Tariff</span>
-                  <span className="text-4xl font-black text-[#00e5ff]">ULTRA DC</span>
-                </div>
+              <div className="flex flex-col gap-1">
+                <span className={`text-[12px] font-black uppercase tracking-[0.4em] transition-colors ${textSecondary}`}>Session Time</span>
+                <span className={`text-2xl font-black tracking-tight transition-colors ${textPrimary}`}>{formatSummaryTime(data.elapsedTime)}</span>
               </div>
             </div>
           </div>
-           <div className="flex-1 flex flex-col items-center justify-center gap-8 py-12 bg-white/5 border-[4px] border-white/10 rounded-[50px]">
-            <div className="w-28 h-28 bg-white p-4 rounded-3xl shadow-2xl">
+           <div className={`flex flex-col items-center justify-center gap-4 py-6 border-[3px] rounded-[40px] transition-all duration-500 ${isLightTheme ? 'bg-white border-slate-200 shadow-md' : 'bg-white/5 border-white/10'}`}>
+            <div className={`w-20 h-20 p-3 rounded-2xl shadow-xl transition-colors ${isLightTheme ? 'bg-slate-100' : 'bg-white'}`}>
               <svg width="100%" height="100%" viewBox="0 0 24 24" fill="black">
                 <path d="M3 3h4v4H3zM3 10h1v1H3zM3 13h4v4H3zM5 5h0M5 15h0M10 3h1v1h-1zM10 10h4v4h-4zM10 17h1v4h-1zM13 3h4v4h-4zM13 17h4v4h-4zM17 10h1v1h-1zM17 13h1v1h-1zM20 3h1v4h-1zM20 10h1v1h-1zM20 13h1v8h-1zM5 5h1M11 11h2v2h-2zM14 4h2M4 14h2M14 18h2M18 4h2" />
               </svg>
             </div>
             <div className="text-center">
-              <span className="text-white text-lg font-black uppercase tracking-[0.5em]">Scan for receipt</span>
+              <span className={`text-sm font-black uppercase tracking-[0.5em] transition-colors ${textPrimary}`}>Scan for info</span>
             </div>
+          </div>
+        </div>
+      );
+    case 'ERROR':
+      return (
+        <div className="flex-1 flex flex-col items-center justify-center pt-32 pb-14 px-14 text-center animate-in fade-in duration-500">
+          <div className="w-24 h-24 rounded-[24px] bg-red-500/20 border-[3px] border-red-500 flex items-center justify-center mb-8 shadow-[0_0_30px_rgba(239,68,68,0.2)]">
+            <svg className="text-red-500" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
+          <h2 className={`text-[42px] font-black uppercase italic tracking-tighter leading-none mb-6 transition-colors ${textPrimary}`}>Fault</h2>
+          <div className={`border-2 rounded-[28px] p-5 w-full max-w-xs shadow-xl transition-all duration-500 ${isLightTheme ? 'bg-red-50 border-red-200' : 'bg-white/5 border-red-500/20'}`}>
+            <p className="text-[#00e5ff] text-lg font-black uppercase tracking-[0.2em] mb-2">E-402</p>
+            <p className={`text-[11px] font-black uppercase tracking-widest leading-relaxed transition-colors ${textSecondary}`}>
+              Ground fault detected.<br/>Safety shutdown engaged.
+            </p>
+          </div>
+          <div className="mt-8 flex flex-col items-center gap-1 opacity-40">
+            <p className={`text-[8px] font-black uppercase tracking-[0.4em] transition-colors ${textPrimary}`}>System ID: VP-9912-A</p>
+            <p className={`text-[8px] font-black uppercase tracking-[0.4em] transition-colors ${textPrimary}`}>Contact Support: +49 800 123 456</p>
           </div>
         </div>
       );

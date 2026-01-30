@@ -1,11 +1,13 @@
 
 export type HMIState = 
   | 'IDLE' 
+  | 'SCANNING_RFID'
   | 'AUTHORIZING' 
   | 'AUTHORIZED_SUCCESS' 
   | 'AUTHORIZATION_DENIED' 
   | 'CHARGING' 
-  | 'SUMMARY';
+  | 'SUMMARY'
+  | 'ERROR';
 
 export interface ChargingData {
   energyDelivered: number; // kWh
