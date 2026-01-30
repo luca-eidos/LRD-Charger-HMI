@@ -1,6 +1,6 @@
-
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,26 +18,30 @@
       overflow: hidden;
       user-select: none;
     }
+
     @keyframes pulse-glow {
-      0%, 100% { opacity: 0.6; filter: drop-shadow(0 0 5px #00e5ff); }
-      50% { opacity: 1; filter: drop-shadow(0 0 15px #00e5ff); }
+
+      0%,
+      100% {
+        opacity: 0.6;
+        filter: drop-shadow(0 0 5px #00e5ff);
+      }
+
+      50% {
+        opacity: 1;
+        filter: drop-shadow(0 0 15px #00e5ff);
+      }
     }
+
     .animate-glow {
       animation: pulse-glow 3s infinite ease-in-out;
     }
   </style>
-<script type="importmap">
-{
-  "imports": {
-    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
-    "@google/genai": "https://esm.sh/@google/genai@^1.38.0",
-    "react/": "https://esm.sh/react@^19.2.4/",
-    "react": "https://esm.sh/react@^19.2.4"
-  }
-}
-</script>
 </head>
+
 <body>
   <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
 </body>
+
 </html>
