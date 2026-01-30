@@ -82,7 +82,6 @@ const MetricBlock: React.FC<{ label: string, value: string, unit: string, icon: 
       <span className={`text-3xl font-black tracking-tighter transition-colors tabular-nums ${isLightTheme ? 'text-slate-900' : 'text-white'}`}>{value}</span>
       <span className="text-[#00e5ff] text-[12px] font-black uppercase opacity-70 ml-1">{unit}</span>
     </div>
-    <div className={`absolute top-4 right-8 w-1 h-10 rounded-full ${isLightTheme ? 'bg-slate-100' : 'bg-white/5'}`}></div>
   </div>
 );
 

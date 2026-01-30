@@ -98,13 +98,12 @@ const IdleScreen: React.FC<IdleScreenProps> = ({ onStart, isLightTheme = false }
         </div>
 
         {/* Support/Info QR Code */}
-        <div className={`p-3 rounded-2xl shadow-lg transition-colors ${isLightTheme ? 'bg-slate-900' : 'bg-white'}`}>
-          <div className={`w-14 h-14 flex items-center justify-center rounded-xl ${isLightTheme ? 'bg-slate-800' : 'bg-black'}`}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="white">
+        <div className={`p-3 rounded-2xl shadow-lg ${isLightTheme ? 'bg-slate-900' : 'bg-white'}`}>
+          <div className="w-14 h-14 flex items-center justify-center rounded-xl bg-white">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="black">
               <path d="M3 3h4v4H3zM3 13h4v4H3zM13 3h4v4h-4zM13 13h4v4h-4zM3 10h1v1H3zM10 3h1v1h-1zM10 10h4v4h-4zM17 10h1v1h-1zM20 10h1v1h-1zM10 17h1v4h-1zM17 17h4v4h-4z" />
             </svg>
           </div>
-          <div className={`mt-2 text-[8px] font-black uppercase text-center tracking-tighter ${isLightTheme ? 'text-white' : 'text-black'}`}>SCAN HELP</div>
         </div>
       </div>
 

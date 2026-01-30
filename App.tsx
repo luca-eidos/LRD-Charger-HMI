@@ -139,8 +139,21 @@ const App: React.FC = () => {
     };
 
   return (
-    <div className={`flex items-center justify-center min-h-screen p-6 transition-colors duration-500 ${themeClasses.appBg}`}>
+    <div className={`relative flex items-center justify-center min-h-screen p-6 transition-colors duration-500 ${themeClasses.appBg}`}>
       <div className="flex flex-col items-center gap-10 w-full max-w-[1024px]">
+        <div className="absolute top-6 right-6">
+          <button
+            onClick={() => setIsLightTheme(!isLightTheme)}
+            className={`flex items-center justify-center p-2 rounded-lg border transition-all active:scale-90 ${isLightTheme ? 'bg-slate-100 border-slate-200 text-slate-600' : 'bg-white/5 border-white/10 text-white/60'}`}
+            title="Toggle Theme"
+          >
+            {isLightTheme ? (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364-.707.707M6.343 17.657l-.707.707m12.728 0-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" /></svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></svg>
+            )}
+          </button>
+        </div>
 
         <div className={`relative w-full aspect-video overflow-hidden rounded-[2px] border-[2px] shadow-[0_0_150px_rgba(0,0,0,0.4)] flex flex-col transition-all duration-500 ${themeClasses.frameBg} ${themeClasses.frameBorder}`}>
           {customBg && (
@@ -168,19 +181,6 @@ const App: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-8">
-              {/* Theme Toggle */}
-              <button
-                onClick={() => setIsLightTheme(!isLightTheme)}
-                className={`flex items-center justify-center p-2 rounded-lg border transition-all active:scale-90 ${isLightTheme ? 'bg-slate-100 border-slate-200 text-slate-600' : 'bg-white/5 border-white/10 text-white/60'}`}
-                title="Toggle Theme"
-              >
-                {isLightTheme ? (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364-.707.707M6.343 17.657l-.707.707m12.728 0-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" /></svg>
-                ) : (
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></svg>
-                )}
-              </button>
-
               <div
                 className={`flex items-center gap-2 px-4 py-1.5 rounded-lg border cursor-pointer hover:bg-opacity-20 active:scale-95 transition-all ${isLightTheme ? 'bg-slate-100 border-slate-200' : 'bg-white/5 border-white/10'}`}
                 onClick={() => setConnType(connType === 'LTE' ? 'ETHERNET' : 'LTE')}
@@ -302,14 +302,6 @@ const App: React.FC = () => {
             })}
           </div>
 
-          <div className="flex justify-center">
-            <button
-              onClick={() => setShowImageGen(true)}
-              className={`px-14 py-5 border-[3px] rounded-full transition-all font-black text-base uppercase tracking-[0.4em] active:scale-95 ${isLightTheme ? 'bg-slate-100 border-slate-200 text-slate-500 hover:text-[#00e5ff] hover:bg-white' : 'bg-white/5 border-white/20 text-white/60 hover:text-[#00e5ff] hover:bg-white/10'}`}
-            >
-              HMI Theme Customization
-            </button>
-          </div>
         </div>
       </div>
     </div>
@@ -352,33 +344,33 @@ const SocketContent: React.FC<{
       return <IdleScreen isLightTheme={isLightTheme} onStart={() => { }} />;
     case 'AUTHORIZING':
       return (
-        <div className="flex-1 flex flex-col items-center justify-center p-2 animate-in fade-in duration-5000">
-          <div className="w-40 h-40 rounded-full border-[12px] border-[#00e5ff]/20 border-t-[#00e5ff] animate-spin mb-14 shadow-[0_0_40px_rgba(0,229,255,0.25)]"></div>
-          <h2 className={`text-xl font-black uppercase tracking-[0.3em] mb-2 transition-colors ${textPrimary}`}>Validating...</h2>
-          <p className={`text-xl font-black uppercase tracking-widest text-center leading-relaxed transition-colors ${textSecondary}`}>Checking<br />RFID Credentials</p>
+        <div className="flex-1 flex flex-col items-center justify-center p-4 animate-in fade-in duration-5000">
+          <div className="w-32 h-32 rounded-full border-[10px] border-[#00e5ff]/20 border-t-[#00e5ff] animate-spin mb-5 shadow-[0_0_40px_rgba(0,229,255,0.25)]"></div>
+          <h2 className={`text-lg font-black uppercase tracking-[0.3em] mb-3 transition-colors ${textPrimary}`}>Validating...</h2>
+          <p className={`text-lg font-black uppercase tracking-widest text-center leading-relaxed transition-colors ${textSecondary}`}>Checking<br />RFID Credentials</p>
         </div>
       );
     case 'AUTHORIZED_SUCCESS':
       return (
-        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center animate-in zoom-in duration-500">
-          <div className="w-36 h-36 rounded-full bg-green-500/20 flex items-center justify-center mb-10 border-[5px] border-green-500/40">
-            <svg className="text-green-500" width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
+        <div className="flex-1 flex flex-col items-center justify-center p-4 text-center animate-in zoom-in duration-500">
+          <div className="w-32 h-32 rounded-full bg-green-500/20 flex items-center justify-center mb-5 border-[4px] border-green-500/40">
+            <svg className="text-green-500" width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
           </div>
-          <h2 className={`text-xl font-black uppercase tracking-tighter mb-6 italic leading-tight transition-colors ${textPrimary}`}>Access<br />Granted</h2>
-          <p className="text-[#00e5ff] text-xl font-black uppercase tracking-widest leading-relaxed">
+          <h2 className={`text-lg font-black uppercase tracking-tighter mb-3 italic leading-tight transition-colors ${textPrimary}`}>Access<br />Granted</h2>
+          <p className="text-[#00e5ff] text-lg font-black uppercase tracking-widest leading-relaxed">
             Please connect cable<br />to your vehicle
           </p>
         </div>
       );
     case 'AUTHORIZATION_DENIED':
       return (
-        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center animate-in slide-in-from-bottom-10 duration-500">
-          <div className="w-44 h-44 rounded-full bg-red-500/20 flex items-center justify-center mb-14 border-[6px] border-red-500/40">
-            <svg className="text-red-500" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+        <div className="flex-1 flex flex-col items-center justify-center p-4 text-center animate-in slide-in-from-bottom-10 duration-500">
+          <div className="w-32 h-32 rounded-full bg-red-500/20 flex items-center justify-center mb-5 border-[4px] border-red-500/40">
+            <svg className="text-red-500" width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
           </div>
-          <h2 className="text-red-500 text-6xl font-black uppercase tracking-tighter mb-8 italic">Denied</h2>
-          <p className={`text-2xl font-black uppercase tracking-widest mb-12 transition-colors ${textPrimary}`}>Invalid Card.</p>
-          <p className={`text-[12px] font-black uppercase tracking-[0.5em] px-8 py-3 rounded-full italic ${isLightTheme ? 'bg-slate-100 text-slate-400' : 'bg-white/5 text-white/40'}`}>Unauthorized Tag</p>
+          <h2 className="text-red-500 text-4xl font-black uppercase tracking-tighter mb-3 italic">Denied</h2>
+          <p className={`text-lg font-black uppercase tracking-widest mb-4 transition-colors ${textPrimary}`}>Invalid Card.</p>
+          <p className={`text-[10px] font-black uppercase tracking-[0.4em] px-5 py-2 rounded-full italic ${isLightTheme ? 'bg-slate-100 text-slate-400' : 'bg-white/5 text-white/40'}`}>Unauthorized Tag</p>
         </div>
       );
     case 'CHARGING':
@@ -416,20 +408,20 @@ const SocketContent: React.FC<{
       );
     case 'ERROR':
       return (
-        <div className="flex-1 flex flex-col items-center justify-center pt-20 pb-14 px-14 text-center animate-in fade-in duration-500">
-          <div className="w-24 h-24 rounded-[24px] bg-red-500/20 border-[3px] border-red-500 flex items-center justify-center mb-8 shadow-[0_0_30px_rgba(239,68,68,0.2)]">
-            <svg className="text-red-500" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+        <div className="flex-1 flex flex-col items-center justify-center pt-16 pb-10 px-12 text-center animate-in fade-in duration-500">
+          <div className="w-24 h-24 rounded-[24px] bg-red-500/20 border-[3px] border-red-500 flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(239,68,68,0.2)]">
+            <svg className="text-red-500" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
               <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
             </svg>
           </div>
-          <h2 className={`text-[42px] font-black uppercase italic tracking-tighter leading-none mb-6 transition-colors ${textPrimary}`}>Fault</h2>
+          <h2 className={`text-[42px] font-black uppercase italic tracking-tighter leading-none mb-4 transition-colors ${textPrimary}`}>Fault</h2>
           <div className={`border-2 rounded-[28px] p-5 w-full max-w-xs shadow-xl transition-all duration-500 ${isLightTheme ? 'bg-red-50 border-red-200' : 'bg-white/5 border-red-500/20'}`}>
             <p className="text-[#00e5ff] text-lg font-black uppercase tracking-[0.2em] mb-2">E-402</p>
             <p className={`text-[11px] font-black uppercase tracking-widest leading-relaxed transition-colors ${textSecondary}`}>
               Ground fault detected.<br />Safety shutdown engaged.
             </p>
           </div>
-          <div className="mt-8 flex flex-col items-center gap-1 opacity-40">
+          <div className="mt-6 flex flex-col items-center gap-1 opacity-40">
             <p className={`text-[8px] font-black uppercase tracking-[0.4em] transition-colors ${textPrimary}`}>System ID: VP-9912-A</p>
             <p className={`text-[8px] font-black uppercase tracking-[0.4em] transition-colors ${textPrimary}`}>Contact Support: +49 800 123 456</p>
           </div>
