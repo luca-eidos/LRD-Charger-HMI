@@ -1,15 +1,18 @@
 
 import React from 'react';
+import { TranslateFn } from '../i18n';
 
 interface IdleScreenProps {
   onStart: () => void;
   isLightTheme?: boolean;
+  t: TranslateFn;
 }
 
 interface PricingBoxesProps {
   textPrimary: string;
   textSecondary: string;
   blockClasses: string;
+  t: TranslateFn;
 }
 
 interface PricingBoxProps {
@@ -39,7 +42,8 @@ const PricingBox: React.FC<PricingBoxProps> = ({
       ) : null}
     </div>
     <span className={`text-4xl font-black tracking-tighter transition-colors ${textPrimary}`}>
-      {value} <span className={`text-sm font-bold uppercase ml-1 ${textSecondary}`}>{unit}</span>
+      {value}{' '}
+      <span className={`text-sm font-bold uppercase tracking-[0.1em] ml-1 ${textSecondary}`}>{unit}</span>
     </span>
   </div>
 );
@@ -48,10 +52,11 @@ const PricingBoxes: React.FC<PricingBoxesProps> = ({
   textPrimary,
   textSecondary,
   blockClasses,
+  t,
 }) => (
   <div className="flex-1 space-y-3">
     <PricingBox
-      label="Energy"
+      label={t('pricingEnergy')}
       value="€0.55"
       unit="/ kWh"
       textPrimary={textPrimary}
@@ -59,26 +64,26 @@ const PricingBoxes: React.FC<PricingBoxesProps> = ({
       blockClasses={blockClasses}
     />
     <PricingBox
-      label="Initial"
+      label={t('pricingInitial')}
       value="€1.00"
-      unit="FLAT"
+      unit={t('pricingFlat')}
       textPrimary={textPrimary}
       textSecondary={textSecondary}
       blockClasses={blockClasses}
     />
     <PricingBox
-      label="Idle Fee"
+      label={t('pricingIdleFee')}
       value="€0.30"
-      unit="/ MIN"
+      unit={t('pricingPerMin')}
       textPrimary={textPrimary}
       textSecondary={textSecondary}
       blockClasses={blockClasses}
-      subLabel="POST-SESSION"
+      subLabel={t('pricingPostSession')}
     />
   </div>
 );
 
-const IdleScreen: React.FC<IdleScreenProps> = ({ onStart, isLightTheme = false }) => {
+const IdleScreen: React.FC<IdleScreenProps> = ({ onStart, isLightTheme = false, t }) => {
   const textPrimary = isLightTheme ? 'text-slate-900' : 'text-white';
   const textSecondary = isLightTheme ? 'text-slate-400' : 'text-white/80';
   const blockClasses = isLightTheme
@@ -94,7 +99,7 @@ const IdleScreen: React.FC<IdleScreenProps> = ({ onStart, isLightTheme = false }
             <span className={`text-[80px] leading-none font-black tracking-tighter transition-colors ${textPrimary}`}>22</span>
             <span className="text-[#00e5ff] text-6xl font-black italic tracking-tighter">kW</span>
           </div>
-          <div className={`text-xs font-black uppercase tracking-[0.5em] mt-3 transition-colors ${textSecondary}`}>Maximum Available Power</div>
+          <div className={`text-xs font-black uppercase tracking-[0.5em] mt-3 transition-colors ${textSecondary}`}>{t('maximumAvailablePower')}</div>
         </div>
 
         {/* Support/Info QR Code */}
@@ -112,6 +117,7 @@ const IdleScreen: React.FC<IdleScreenProps> = ({ onStart, isLightTheme = false }
         textPrimary={textPrimary}
         textSecondary={textSecondary}
         blockClasses={blockClasses}
+        t={t}
       />
     </div>
   );

@@ -1,15 +1,17 @@
 
 import React from 'react';
 import { ChargingData } from '../types';
+import { TranslateFn } from '../i18n';
 
 interface ChargingScreenProps {
   data: ChargingData;
   isConnecting: boolean;
   onStop: () => void;
   isLightTheme?: boolean;
+  t: TranslateFn;
 }
 
-const ChargingScreen: React.FC<ChargingScreenProps> = ({ data, isConnecting, onStop, isLightTheme = false }) => {
+const ChargingScreen: React.FC<ChargingScreenProps> = ({ data, isConnecting, onStop, isLightTheme = false, t }) => {
   const formatTime = (seconds: number) => {
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
@@ -41,8 +43,8 @@ const ChargingScreen: React.FC<ChargingScreenProps> = ({ data, isConnecting, onS
             </svg>
             
             <div className="text-center z-10">
-              <div className="text-[#00e5ff] text-[10px] font-black uppercase tracking-[0.6em] mb-1 opacity-80">LIVE FLOW</div>
-              <div className={`text-[80px] font-black leading-none tracking-tighter drop-shadow-2xl tabular-nums transition-colors ${textPrimary}`}>{Math.round(data.currentPower)}</div>
+              <div className="text-[#00e5ff] text-[10px] font-black uppercase tracking-[0.6em] mb-1 opacity-80">{t('liveFlow')}</div>
+              <div className={`text-[80px] font-black leading-none tracking-tighter drop-shadow-2xl tabular-nums transition-colors ${textPrimary}`}>{Number(data.currentPower).toFixed(1)}</div>
               <div className="text-[#00e5ff] text-xl font-black italic tracking-tighter uppercase">kW</div>
             </div>
           </div>
@@ -52,14 +54,14 @@ const ChargingScreen: React.FC<ChargingScreenProps> = ({ data, isConnecting, onS
       {/* Metric Blocks - Moved Up */}
       <div className="grid grid-cols-2 gap-6 mb-8">
         <MetricBlock 
-          label="Energy Transferred" 
+          label={t('energyTransferred')} 
           value={data.energyDelivered.toFixed(2)} 
           unit="kWh" 
           isLightTheme={isLightTheme}
           icon={<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>}
         />
         <MetricBlock 
-          label="Elapsed Session" 
+          label={t('elapsedSession')} 
           value={formatTime(data.elapsedTime)} 
           unit="H:M:S" 
           isLightTheme={isLightTheme}
